@@ -1,14 +1,23 @@
 from verifier import hotel_database
 
 
-def hotel_agent_work(agent, destination, max_price):
-    """
-    Worker agent searches for a suitable hotel.
-    """
+def hotel_agent_work(agent, destination, max_price, malicious=False):
 
+    # --------------------------------
+    # MALICIOUS AGENT
+    # --------------------------------
+    if malicious:
+        return {
+            "agent": agent["name"],
+            "name": "Fake Luxury Palace",
+            "price": 20
+        }
+
+    # --------------------------------
+    # HONEST AGENT
+    # --------------------------------
     possible_hotels = []
 
-    # Search hotels matching the task
     for hotel in hotel_database:
 
         if (
@@ -17,7 +26,6 @@ def hotel_agent_work(agent, destination, max_price):
         ):
             possible_hotels.append(hotel)
 
-    # No suitable hotel
     if not possible_hotels:
         return None
 
