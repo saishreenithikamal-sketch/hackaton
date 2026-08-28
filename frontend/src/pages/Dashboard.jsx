@@ -5,11 +5,17 @@ import {
   ShieldCheck,
   Plus,
   LayoutDashboard,
-  Store, 
+  Store,
+  Settings,
   BarChart3,
   Bell,
   ChevronRight,
 } from "lucide-react";
+
+
+// =====================================================
+// DEMO ACTIVITY DATA
+// =====================================================
 
 const activity = [
   ["10:42:01", "[SYSTEM]", "Boss Agent created trip task #TR-992"],
@@ -20,18 +26,35 @@ const activity = [
   ["10:42:25", "[TRUST]", "Verification started on Agent Beta settlement."],
 ];
 
+
+// =====================================================
+// DASHBOARD
+// =====================================================
+
 function Dashboard({ onNavigate }) {
   return (
     <div className="dashboard">
 
-      {/* SIDEBAR */}
+      {/* =====================================================
+          SIDEBAR
+      ===================================================== */}
+
       <aside className="sidebar">
+
+        {/* BRAND */}
+
         <div className="brand">
           <Activity size={24} />
           <span>AGENTRA</span>
         </div>
 
+
+        {/* =================================================
+            MAIN NAVIGATION
+        ================================================= */}
+
         <nav>
+
           <NavItem
             icon={<LayoutDashboard />}
             label="Overview"
@@ -67,57 +90,127 @@ function Dashboard({ onNavigate }) {
             label="Trust & Reputation"
             onClick={() => onNavigate("trust")}
           />
+
         </nav>
 
+
+        {/* =================================================
+            BOTTOM NAVIGATION
+        ================================================= */}
+
         <div className="sidebar-bottom">
+        <NavItem
+  icon={<BarChart3 />}
+  label="System Status"
+  onClick={() => onNavigate("status")}
+/>
 
           {/* SYSTEM STATUS */}
+
           <NavItem
             icon={<BarChart3 />}
             label="System Status"
-            onClick={() => onNavigate("system")}
+            onClick={() => onNavigate("status")}
           />
 
 
+          {/* SETTINGS - DECORATIVE */}
+
+          <NavItem
+            icon={<Settings />}
+            label="Settings"
+            onClick={() => onNavigate("settings")}
+          />
+
+
+          {/* BOSS AGENT STATUS */}
+
           <div className="agent-online">
-            <div className="avatar">B</div>
+
+            <div className="avatar">
+              B
+            </div>
 
             <div>
-              <strong>Boss Agent</strong>
-              <small>12 AGENTS ONLINE</small>
+              <strong>
+                Boss Agent
+              </strong>
+
+              <small>
+                12 AGENTS ONLINE
+              </small>
             </div>
+
           </div>
 
         </div>
+
       </aside>
 
-      {/* MAIN */}
+
+      {/* =====================================================
+          MAIN DASHBOARD
+      ===================================================== */}
+
       <main className="dashboard-main">
 
-        {/* TOP BAR */}
+
+        {/* =================================================
+            TOP BAR
+        ================================================= */}
+
         <header className="topbar">
+
           <div>
-            <span className="mono muted">MISSION CONTROL</span>
-            <h1>Overview</h1>
+
+            <span className="mono muted">
+              MISSION CONTROL
+            </span>
+
+            <h1>
+              Overview
+            </h1>
+
           </div>
 
+
           <div className="top-actions">
-            <span className="credits">942.50 CRD</span>
+
+            <span className="credits">
+              942.50 CRD
+            </span>
 
             <button className="icon-button">
               <Bell size={18} />
             </button>
 
-            <div className="avatar">B</div>
+            <div className="avatar">
+              B
+            </div>
+
           </div>
+
         </header>
+
+
+        {/* =================================================
+            DASHBOARD CONTENT
+        ================================================= */}
 
         <div className="dashboard-content">
 
-          {/* HERO */}
+
+          {/* =================================================
+              HERO SECTION
+          ================================================= */}
+
           <section className="hero">
+
             <div>
-              <span className="tag">AUTONOMOUS ECONOMY</span>
+
+              <span className="tag">
+                AUTONOMOUS ECONOMY
+              </span>
 
               <h2>
                 Command your
@@ -130,17 +223,29 @@ function Dashboard({ onNavigate }) {
                 verify their work and automatically settle rewards.
               </p>
 
+
+              {/* CREATE TRIP BUTTON */}
+
               <button
                 className="primary-button"
                 onClick={() => onNavigate("launch")}
               >
                 <Plus size={17} />
+
                 Create New Trip
               </button>
+
             </div>
 
+
+            {/* =================================================
+                ORBIT ANIMATION
+            ================================================= */}
+
             <div className="hero-orbit">
+
               <div className="orbit orbit-large" />
+
               <div className="orbit orbit-small" />
 
               <div className="core">
@@ -148,12 +253,20 @@ function Dashboard({ onNavigate }) {
               </div>
 
               <div className="orbit-node node-one" />
+
               <div className="orbit-node node-two" />
+
               <div className="orbit-node node-three" />
+
             </div>
+
           </section>
 
-          {/* METRICS */}
+
+          {/* =================================================
+              METRICS
+          ================================================= */}
+
           <section className="metrics">
 
             <Metric
@@ -182,59 +295,100 @@ function Dashboard({ onNavigate }) {
 
           </section>
 
-          {/* GRID */}
+
+          {/* =================================================
+              DASHBOARD GRID
+          ================================================= */}
+
           <section className="dashboard-grid">
 
-            {/* ACTIVITY */}
+
+            {/* =================================================
+                LIVE AGENT ACTIVITY
+            ================================================= */}
+
             <div className="panel activity-panel">
 
               <div className="panel-header">
+
                 <div>
-                  <span className="mono muted">REAL-TIME</span>
-                  <h3>Live Agent Activity</h3>
+
+                  <span className="mono muted">
+                    REAL-TIME
+                  </span>
+
+                  <h3>
+                    Live Agent Activity
+                  </h3>
+
                 </div>
 
+
                 <span className="live-status">
+
                   <span />
+
                   LIVE
+
                 </span>
+
               </div>
 
+
               <div className="activity-list">
-                {activity.map(([time, type, message]) => (
-                  <div
-                    className="activity-row"
-                    key={time}
-                  >
-                    <span className="time mono">
-                      {time}
-                    </span>
 
-                    <span className="activity-type mono">
-                      {type}
-                    </span>
+                {activity.map(
+                  ([time, type, message]) => (
 
-                    <span className="activity-message">
-                      {message}
-                    </span>
-                  </div>
-                ))}
+                    <div
+                      className="activity-row"
+                      key={time}
+                    >
+
+                      <span className="time mono">
+                        {time}
+                      </span>
+
+                      <span className="activity-type mono">
+                        {type}
+                      </span>
+
+                      <span className="activity-message">
+                        {message}
+                      </span>
+
+                    </div>
+
+                  )
+                )}
+
               </div>
 
             </div>
 
-            {/* ECONOMY */}
+
+            {/* =================================================
+                ECONOMY HEALTH
+            ================================================= */}
+
             <div className="panel">
 
               <div className="panel-header">
+
                 <div>
+
                   <span className="mono muted">
                     24H OVERVIEW
                   </span>
 
-                  <h3>Economy Health</h3>
+                  <h3>
+                    Economy Health
+                  </h3>
+
                 </div>
+
               </div>
+
 
               <div className="economy-list">
 
@@ -266,25 +420,41 @@ function Dashboard({ onNavigate }) {
 
           </section>
 
-          {/* MISSIONS */}
+
+          {/* =================================================
+              ACTIVE MISSIONS
+          ================================================= */}
+
           <section className="panel missions-panel">
 
             <div className="panel-header">
 
               <div>
+
                 <span className="mono muted">
                   CURRENT OPERATIONS
                 </span>
 
-                <h3>Active Missions</h3>
+                <h3>
+                  Active Missions
+                </h3>
+
               </div>
 
-              <button className="text-button">
+
+              {/* THIS BUTTON OPENS LIVE MISSIONS */}
+
+              <button
+                className="text-button"
+                onClick={() => onNavigate("missions")}
+              >
                 View all
+
                 <ChevronRight size={15} />
               </button>
 
             </div>
+
 
             <div className="mission-table">
 
@@ -307,15 +477,17 @@ function Dashboard({ onNavigate }) {
           </section>
 
         </div>
+
       </main>
+
     </div>
   );
 }
 
 
-/* =========================================
-   NAV ITEM
-========================================= */
+// =====================================================
+// NAVIGATION ITEM
+// =====================================================
 
 function NavItem({
   icon,
@@ -324,20 +496,28 @@ function NavItem({
   onClick,
 }) {
   return (
+
     <button
+      type="button"
       className={`nav-item ${active ? "active" : ""}`}
       onClick={onClick}
     >
+
       {icon}
-      <span>{label}</span>
+
+      <span>
+        {label}
+      </span>
+
     </button>
+
   );
 }
 
 
-/* =========================================
-   METRIC
-========================================= */
+// =====================================================
+// METRIC CARD
+// =====================================================
 
 function Metric({
   icon,
@@ -345,6 +525,7 @@ function Metric({
   value,
 }) {
   return (
+
     <div className="metric-card">
 
       <div className="metric-icon">
@@ -360,13 +541,14 @@ function Metric({
       </strong>
 
     </div>
+
   );
 }
 
 
-/* =========================================
-   ECONOMY ROW
-========================================= */
+// =====================================================
+// ECONOMY ROW
+// =====================================================
 
 function EconomyRow({
   label,
@@ -375,9 +557,12 @@ function EconomyRow({
   danger,
 }) {
   return (
+
     <div className="economy-row">
 
-      <span>{label}</span>
+      <span>
+        {label}
+      </span>
 
       <strong
         className={
@@ -392,13 +577,14 @@ function EconomyRow({
       </strong>
 
     </div>
+
   );
 }
 
 
-/* =========================================
-   MISSION
-========================================= */
+// =====================================================
+// MISSION ROW
+// =====================================================
 
 function Mission({
   id,
@@ -407,11 +593,13 @@ function Mission({
   agents,
 }) {
   return (
+
     <div className="mission-row">
 
       <span className="mono mission-id">
         #{id}
       </span>
+
 
       <div className="mission-route">
 
@@ -424,6 +612,7 @@ function Mission({
         </span>
 
       </div>
+
 
       <div className="progress-wrapper">
 
@@ -439,6 +628,7 @@ function Mission({
 
         </div>
 
+
         <div className="progress">
 
           <div
@@ -451,12 +641,14 @@ function Mission({
 
       </div>
 
+
       <ChevronRight
         size={17}
         className="muted"
       />
 
     </div>
+
   );
 }
 

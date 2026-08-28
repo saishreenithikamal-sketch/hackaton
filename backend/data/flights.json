@@ -1,0 +1,16 @@
+[
+    {
+        "id": "FL001",
+        "from": "Toronto",
+        "to": "New York",
+        "date": "2026-09-15",
+        "price": 240
+    },
+    {
+        "id": "FL002",
+        "from": "Toronto",
+        "to": "New York",
+        "date": "2026-09-15",
+        "price": 310
+    }
+]

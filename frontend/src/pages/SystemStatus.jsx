@@ -1,442 +1,398 @@
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
-  Activity,
   Server,
+  Bot,
+  Store,
   ShieldCheck,
+  Wallet,
   Database,
-  Network,
-  Cpu,
-  CheckCircle2,
+  Activity,
+  RefreshCw,
   AlertTriangle,
-  Clock3,
-  Zap,
 } from "lucide-react";
 
-const services = [
-  {
-    name: "Mission Orchestrator",
-    type: "CORE SERVICE",
-    status: "OPERATIONAL",
-    uptime: "99.98%",
-    latency: "42 ms",
-    icon: <Activity />,
-  },
-  {
-    name: "Agent Network",
-    type: "NETWORK",
-    status: "OPERATIONAL",
-    uptime: "99.94%",
-    latency: "68 ms",
-    icon: <Network />,
-  },
-  {
-    name: "Trust Verification",
-    type: "SECURITY",
-    status: "OPERATIONAL",
-    uptime: "99.99%",
-    latency: "31 ms",
-    icon: <ShieldCheck />,
-  },
-  {
-    name: "Economy Engine",
-    type: "SETTLEMENT",
-    status: "OPERATIONAL",
-    uptime: "99.97%",
-    latency: "27 ms",
-    icon: <Zap />,
-  },
-  {
-    name: "Mission Database",
-    type: "DATABASE",
-    status: "OPERATIONAL",
-    uptime: "99.99%",
-    latency: "18 ms",
-    icon: <Database />,
-  },
-  {
-    name: "Compute Cluster",
-    type: "INFRASTRUCTURE",
-    status: "DEGRADED",
-    uptime: "98.71%",
-    latency: "114 ms",
-    icon: <Cpu />,
-  },
-];
-
-const events = [
-  ["10:42:25", "TRUST", "Agent Beta verification completed"],
-  ["10:42:20", "ECONOMY", "Escrow transaction confirmed"],
-  ["10:42:12", "MARKET", "Hotel agents connected to marketplace"],
-  ["10:41:58", "NETWORK", "New agent node registered"],
-  ["10:41:31", "SYSTEM", "Compute node health check completed"],
-  ["10:40:44", "DATABASE", "Mission state synchronization completed"],
-];
-
 function SystemStatus({ onBack }) {
+  const [backendOnline, setBackendOnline] = useState(null);
+  const [agentCount, setAgentCount] = useState(0);
+  const [checking, setChecking] = useState(false);
+  const [lastChecked, setLastChecked] = useState("");
+
+  const checkSystem = async () => {
+    setChecking(true);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/agents");
+
+      if (!response.ok) {
+        throw new Error("Backend unavailable");
+      }
+
+      const data = await response.json();
+
+      const agents = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.agents)
+        ? data.agents
+        : [];
+
+      setAgentCount(agents.length);
+      setBackendOnline(true);
+    } catch (error) {
+      console.error("SYSTEM HEALTH CHECK FAILED:", error);
+
+      setBackendOnline(false);
+      setAgentCount(0);
+    } finally {
+      setChecking(false);
+      setLastChecked(new Date().toLocaleTimeString());
+    }
+  };
+
+  useEffect(() => {
+    checkSystem();
+  }, []);
+
+  const operational = backendOnline === true;
+
   return (
-    <div className="status-app">
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#090d0e",
+        color: "#f4f4f4",
+        padding: "36px 4%",
+      }}
+    >
+      {/* BACK */}
+      <button
+        onClick={onBack}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          background: "transparent",
+          border: "1px solid #00d7e6",
+          color: "#00e5ff",
+          padding: "11px 16px",
+          cursor: "pointer",
+          marginBottom: "42px",
+        }}
+      >
+        <ArrowLeft size={16} />
+        BACK TO OVERVIEW
+      </button>
 
-      {/* TOPBAR */}
-      <header className="status-topbar">
+      {/* HEADER */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "30px",
+          marginBottom: "35px",
+        }}
+      >
+        <div>
+          <div style={labelStyle}>AGENTRA INFRASTRUCTURE</div>
 
-        <button className="status-back" onClick={onBack}>
-          <ArrowLeft size={16} />
-          BACK TO OVERVIEW
+          <h1 style={{ fontSize: "52px", margin: "8px 0" }}>
+            System Status
+          </h1>
+
+          <p style={descriptionStyle}>
+            Real-time health monitoring for the autonomous agent
+            economy infrastructure.
+          </p>
+        </div>
+
+        <button
+          onClick={checkSystem}
+          disabled={checking}
+          style={{
+            border: "1px solid #00aeba",
+            background: "transparent",
+            color: "#00e5ff",
+            padding: "14px 18px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "9px",
+            fontFamily: "monospace",
+            fontWeight: "bold",
+          }}
+        >
+          <RefreshCw size={17} />
+          {checking ? "CHECKING..." : "RUN HEALTH CHECK"}
         </button>
+      </div>
 
-        <div className="status-title">
-          <Activity size={18} />
-          SYSTEM STATUS
-        </div>
-
-        <div className="status-network">
-          <span className="status-network-dot" />
-          ALL SYSTEMS MONITORED
-        </div>
-
-      </header>
-
-      {/* MAIN */}
-      <main className="status-main">
-
-        {/* HEADER */}
-        <section className="status-header">
+      {/* OVERALL STATUS */}
+      <section
+        style={{
+          ...panelStyle,
+          borderColor: operational ? "#245a4c" : "#67363a",
+          marginBottom: "28px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "18px",
+          }}
+        >
+          {operational ? (
+            <ShieldCheck size={34} color="#42e6ac" />
+          ) : (
+            <AlertTriangle size={34} color="#ff626c" />
+          )}
 
           <div>
-            <span className="status-kicker">
-              INFRASTRUCTURE MONITOR
-            </span>
+            <div style={labelStyle}>PLATFORM HEALTH</div>
 
-            <h1>System Status</h1>
+            <h2
+              style={{
+                margin: "5px 0",
+                color: operational ? "#42e6ac" : "#ff626c",
+              }}
+            >
+              {backendOnline === null
+                ? "CHECKING SYSTEM..."
+                : operational
+                ? "ALL SYSTEMS OPERATIONAL"
+                : "SYSTEM CONNECTION ISSUE"}
+            </h2>
 
-            <p>
-              Monitor the health, availability and performance
-              of the Agentra autonomous agent infrastructure.
+            <p style={{ ...descriptionStyle, margin: 0 }}>
+              {operational
+                ? "Core AGENTRA services are available and ready for autonomous missions."
+                : "The frontend could not reach the AGENTRA backend."}
             </p>
           </div>
-
-          <div className="overall-status">
-            <div className="overall-icon">
-              <CheckCircle2 size={25} />
-            </div>
-
-            <div>
-              <span>OVERALL STATUS</span>
-              <strong>OPERATIONAL</strong>
-              <small>Last checked 12 seconds ago</small>
-            </div>
-          </div>
-
-        </section>
-
-        {/* SUMMARY */}
-        <section className="status-metrics">
-
-          <StatusMetric
-            icon={<Server />}
-            label="SERVICES"
-            value="6 / 6"
-            detail="MONITORED"
-          />
-
-          <StatusMetric
-            icon={<Activity />}
-            label="UPTIME"
-            value="99.94%"
-            detail="30 DAY AVERAGE"
-          />
-
-          <StatusMetric
-            icon={<Clock3 />}
-            label="AVG LATENCY"
-            value="50 ms"
-            detail="CURRENT"
-          />
-
-          <StatusMetric
-            icon={<ShieldCheck />}
-            label="SECURITY"
-            value="100%"
-            detail="HEALTHY"
-          />
-
-        </section>
-
-        {/* SERVICES */}
-        <section className="status-panel">
-
-          <div className="status-panel-header">
-
-            <div>
-              <span>INFRASTRUCTURE</span>
-              <h2>Service Health</h2>
-            </div>
-
-            <span className="status-live">
-              <span />
-              LIVE MONITORING
-            </span>
-
-          </div>
-
-          <div className="service-list">
-
-            {services.map((service) => (
-              <div
-                className="service-row"
-                key={service.name}
-              >
-
-                <div className="service-icon">
-                  {service.icon}
-                </div>
-
-                <div className="service-name">
-                  <strong>{service.name}</strong>
-                  <span>{service.type}</span>
-                </div>
-
-                <div className="service-health">
-
-                  <span
-                    className={
-                      service.status === "DEGRADED"
-                        ? "service-status degraded"
-                        : "service-status"
-                    }
-                  >
-                    <span />
-                    {service.status}
-                  </span>
-
-                </div>
-
-                <div className="service-stat">
-                  <span>UPTIME</span>
-                  <strong>{service.uptime}</strong>
-                </div>
-
-                <div className="service-stat">
-                  <span>LATENCY</span>
-                  <strong>{service.latency}</strong>
-                </div>
-
-              </div>
-            ))}
-
-          </div>
-
-        </section>
-
-        {/* LOWER GRID */}
-        <section className="status-grid">
-
-          {/* ACTIVITY */}
-          <div className="status-panel">
-
-            <div className="status-panel-header">
-
-              <div>
-                <span>REAL-TIME</span>
-                <h2>System Events</h2>
-              </div>
-
-              <span className="event-count">
-                6 EVENTS
-              </span>
-
-            </div>
-
-            <div className="system-events">
-
-              {events.map(([time, type, message]) => (
-                <div
-                  className="system-event"
-                  key={`${time}-${message}`}
-                >
-
-                  <span className="event-time">
-                    {time}
-                  </span>
-
-                  <span className="event-type">
-                    [{type}]
-                  </span>
-
-                  <span className="event-message">
-                    {message}
-                  </span>
-
-                  <CheckCircle2 size={14} />
-
-                </div>
-              ))}
-
-            </div>
-
-          </div>
-
-          {/* INCIDENTS */}
-          <div className="status-panel">
-
-            <div className="status-panel-header">
-
-              <div>
-                <span>RELIABILITY</span>
-                <h2>Incidents</h2>
-              </div>
-
-            </div>
-
-            <div className="incident-empty">
-
-              <div className="incident-icon">
-                <CheckCircle2 size={24} />
-              </div>
-
-              <strong>NO ACTIVE INCIDENTS</strong>
-
-              <p>
-                All monitored services are operating
-                within expected parameters.
-              </p>
-
-            </div>
-
-            <div className="incident-history">
-
-              <div>
-                <span>LAST INCIDENT</span>
-                <strong>18 DAYS AGO</strong>
-              </div>
-
-              <div>
-                <span>RESOLUTION TIME</span>
-                <strong>4 MIN 12 SEC</strong>
-              </div>
-
-            </div>
-
-          </div>
-
-        </section>
-
-        {/* PERFORMANCE */}
-        <section className="status-panel performance-panel">
-
-          <div className="status-panel-header">
-
-            <div>
-              <span>PERFORMANCE</span>
-              <h2>Network Performance</h2>
-            </div>
-
-            <span className="performance-value">
-              99.94%
-            </span>
-
-          </div>
-
-          <div className="performance-bars">
-
-            <PerformanceBar
-              label="Agent Connectivity"
-              value="98%"
-            />
-
-            <PerformanceBar
-              label="Mission Processing"
-              value="96%"
-            />
-
-            <PerformanceBar
-              label="Trust Verification"
-              value="99%"
-            />
-
-            <PerformanceBar
-              label="Settlement Processing"
-              value="97%"
-            />
-
-          </div>
-
-        </section>
-
-        {/* FOOTER */}
-        <footer className="status-footer">
-
-          <div>
-            <ShieldCheck size={16} />
-            <span>SECURITY</span>
-            <strong>PROTECTED</strong>
-          </div>
-
-          <div>
-            <Network size={16} />
-            <span>NETWORK</span>
-            <strong>156 AGENTS ONLINE</strong>
-          </div>
-
-          <div>
-            <Server size={16} />
-            <span>INFRASTRUCTURE</span>
-            <strong>6 SERVICES</strong>
-          </div>
-
-          <div>
-            <AlertTriangle size={16} />
-            <span>INCIDENTS</span>
-            <strong>0 ACTIVE</strong>
-          </div>
-
-        </footer>
-
-      </main>
+        </div>
+      </section>
+
+      {/* COMPONENT HEALTH */}
+      <div style={{ marginBottom: "15px" }}>
+        <div style={labelStyle}>INFRASTRUCTURE</div>
+        <h2 style={{ margin: "6px 0" }}>Component Health</h2>
+      </div>
+
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: "14px",
+        }}
+      >
+        <StatusCard
+          icon={<Server />}
+          title="Backend API"
+          description="FastAPI service"
+          status={operational ? "ONLINE" : "OFFLINE"}
+          healthy={operational}
+        />
+
+        <StatusCard
+          icon={<Bot />}
+          title="Agent Network"
+          description={
+            operational
+              ? `${agentCount} agents discovered`
+              : "Agent discovery unavailable"
+          }
+          status={operational ? "CONNECTED" : "UNAVAILABLE"}
+          healthy={operational}
+        />
+
+        <StatusCard
+          icon={<Store />}
+          title="Marketplace Engine"
+          description="Trust-aware bidding and selection"
+          status={operational ? "OPERATIONAL" : "UNAVAILABLE"}
+          healthy={operational}
+        />
+
+        <StatusCard
+          icon={<ShieldCheck />}
+          title="Independent Verifier"
+          description="Validates agent execution"
+          status={operational ? "OPERATIONAL" : "UNAVAILABLE"}
+          healthy={operational}
+        />
+
+        <StatusCard
+          icon={<Wallet />}
+          title="Escrow Engine"
+          description="Lock, release and refund protection"
+          status={operational ? "OPERATIONAL" : "UNAVAILABLE"}
+          healthy={operational}
+        />
+
+        <StatusCard
+          icon={<Activity />}
+          title="Reputation Engine"
+          description="Trust and fraud penalty system"
+          status={operational ? "OPERATIONAL" : "UNAVAILABLE"}
+          healthy={operational}
+        />
+
+        <StatusCard
+          icon={<Database />}
+          title="Data Layer"
+          description="Mission and agent state"
+          status={operational ? "CONNECTED" : "UNAVAILABLE"}
+          healthy={operational}
+        />
+
+        <StatusCard
+          icon={<ShieldCheck />}
+          title="Rogue Agent Protection"
+          description="Verify before payment"
+          status={operational ? "ARMED" : "UNAVAILABLE"}
+          healthy={operational}
+        />
+      </section>
+
+      {/* ARCHITECTURE FLOW */}
+      <section
+        style={{
+          ...panelStyle,
+          marginTop: "30px",
+        }}
+      >
+        <div style={labelStyle}>SYSTEM PIPELINE</div>
+
+        <h2 style={{ margin: "7px 0 25px" }}>
+          Autonomous Economy Infrastructure
+        </h2>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(150px, 1fr))",
+            gap: "10px",
+          }}
+        >
+          <Flow name="FASTAPI" />
+          <Flow name="MARKETPLACE" />
+          <Flow name="AGENTS" />
+          <Flow name="VERIFIER" />
+          <Flow name="ESCROW" />
+          <Flow name="REPUTATION" />
+        </div>
+      </section>
+
+      <div
+        style={{
+          marginTop: "18px",
+          color: "#78949c",
+          fontFamily: "monospace",
+          fontSize: "11px",
+        }}
+      >
+        LAST HEALTH CHECK: {lastChecked || "INITIALIZING..."}
+      </div>
     </div>
   );
 }
 
-function StatusMetric({
+function StatusCard({
   icon,
-  label,
-  value,
-  detail,
+  title,
+  description,
+  status,
+  healthy,
 }) {
   return (
-    <div className="status-metric">
-
-      <div className="status-metric-icon">
-        {icon}
-      </div>
-
-      <span>{label}</span>
-
-      <strong>{value}</strong>
-
-      <small>{detail}</small>
-
-    </div>
-  );
-}
-
-function PerformanceBar({ label, value }) {
-  return (
-    <div className="performance-bar">
-
-      <div className="performance-label">
-        <span>{label}</span>
-        <strong>{value}</strong>
-      </div>
-
-      <div className="performance-track">
+    <div style={panelStyle}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "15px",
+        }}
+      >
         <div
-          style={{ width: value }}
-        />
+          style={{
+            width: "45px",
+            height: "45px",
+            display: "grid",
+            placeItems: "center",
+            border: "1px solid #00aeba",
+            color: "#00e5ff",
+          }}
+        >
+          {icon}
+        </div>
+
+        <span
+          style={{
+            color: healthy ? "#42e6ac" : "#ff626c",
+            fontFamily: "monospace",
+            fontSize: "11px",
+            fontWeight: "bold",
+          }}
+        >
+          ● {status}
+        </span>
       </div>
 
+      <h3 style={{ margin: "22px 0 7px" }}>{title}</h3>
+
+      <p style={{ ...descriptionStyle, margin: 0 }}>
+        {description}
+      </p>
     </div>
   );
 }
+
+function Flow({ name }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #245a4c",
+        background: "#14201d",
+        padding: "18px",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          color: "#42e6ac",
+          fontFamily: "monospace",
+          fontSize: "11px",
+          marginBottom: "7px",
+        }}
+      >
+        ● HEALTHY
+      </div>
+
+      <strong>{name}</strong>
+    </div>
+  );
+}
+
+const panelStyle = {
+  border: "1px solid #314247",
+  background: "#151a1b",
+  padding: "25px",
+};
+
+const labelStyle = {
+  color: "#78949c",
+  fontFamily: "monospace",
+  fontSize: "11px",
+  letterSpacing: "1.5px",
+};
+
+const descriptionStyle = {
+  color: "#8da9b2",
+  fontSize: "14px",
+};
 
 export default SystemStatus;
