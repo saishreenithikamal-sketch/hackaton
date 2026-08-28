@@ -9,6 +9,7 @@ import Economy from "./pages/Economy";
 import TrustReputation from "./pages/TrustReputation";
 import SystemStatus from "./pages/SystemStatus";
 import SettingsPage from "./pages/SettingsPage";
+import Analytics from "./pages/Analytics";
 
 import "./App.css";
 
@@ -30,13 +31,14 @@ function App() {
   // CREATE TRIP
   // =====================================================
   if (screen === "launch") {
-    return (
-      <LaunchMission
-        onBack={() => setScreen("dashboard")}
-        onLaunch={handleLaunch}
-      />
-    );
-  }
+  return (
+    <LaunchMission
+      onBack={() => setScreen("dashboard")}
+      onLaunch={handleLaunch}
+      onNavigate={(destination) => setScreen(destination)}
+    />
+  );
+}
 
   // =====================================================
   // LIVE MISSION CONTROL
@@ -118,6 +120,14 @@ function App() {
       />
     );
   }
+  if (screen === "analytics") {
+  return (
+    <Analytics
+      mission={activeMission}
+      onBack={() => setScreen("dashboard")}
+    />
+  );
+}
 
   // =====================================================
   // DASHBOARD
@@ -151,6 +161,9 @@ function App() {
 
         if (destination === "settings") {
           setScreen("settings");
+        }
+        if (destination === "analytics") {
+          setScreen("analytics");
         }
       }}
     />

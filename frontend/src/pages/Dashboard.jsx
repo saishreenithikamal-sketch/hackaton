@@ -112,6 +112,7 @@ function Dashboard({ onNavigate }) {
             label="System Status"
             onClick={() => onNavigate("status")}
           />
+          
 
 
           {/* SETTINGS - DECORATIVE */}
@@ -121,7 +122,11 @@ function Dashboard({ onNavigate }) {
             label="Settings"
             onClick={() => onNavigate("settings")}
           />
-
+          <NavItem
+  icon={<BarChart3 />}
+  label="Analytics"
+  onClick={() => onNavigate?.("analytics")}
+/>
 
           {/* BOSS AGENT STATUS */}
 
