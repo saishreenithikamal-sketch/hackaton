@@ -5,9 +5,7 @@ import {
   ShieldCheck,
   Plus,
   LayoutDashboard,
-  Plane,
-  Store,
-  Settings,
+  Store, 
   BarChart3,
   Bell,
   ChevronRight,
@@ -34,7 +32,11 @@ function Dashboard({ onNavigate }) {
         </div>
 
         <nav>
-          <NavItem icon={<LayoutDashboard />} label="Overview" active />
+          <NavItem
+            icon={<LayoutDashboard />}
+            label="Overview"
+            active
+          />
 
           <NavItem
             icon={<Plus />}
@@ -68,16 +70,24 @@ function Dashboard({ onNavigate }) {
         </nav>
 
         <div className="sidebar-bottom">
-          <NavItem icon={<BarChart3 />} label="System Status" />
-          <NavItem icon={<Settings />} label="Settings" />
+
+          {/* SYSTEM STATUS */}
+          <NavItem
+            icon={<BarChart3 />}
+            label="System Status"
+            onClick={() => onNavigate("system")}
+          />
+
 
           <div className="agent-online">
             <div className="avatar">B</div>
+
             <div>
               <strong>Boss Agent</strong>
               <small>12 AGENTS ONLINE</small>
             </div>
           </div>
+
         </div>
       </aside>
 
@@ -192,8 +202,13 @@ function Dashboard({ onNavigate }) {
 
               <div className="activity-list">
                 {activity.map(([time, type, message]) => (
-                  <div className="activity-row" key={time}>
-                    <span className="time mono">{time}</span>
+                  <div
+                    className="activity-row"
+                    key={time}
+                  >
+                    <span className="time mono">
+                      {time}
+                    </span>
 
                     <span className="activity-type mono">
                       {type}
@@ -213,7 +228,10 @@ function Dashboard({ onNavigate }) {
 
               <div className="panel-header">
                 <div>
-                  <span className="mono muted">24H OVERVIEW</span>
+                  <span className="mono muted">
+                    24H OVERVIEW
+                  </span>
+
                   <h3>Economy Health</h3>
                 </div>
               </div>
@@ -252,14 +270,20 @@ function Dashboard({ onNavigate }) {
           <section className="panel missions-panel">
 
             <div className="panel-header">
+
               <div>
-                <span className="mono muted">CURRENT OPERATIONS</span>
+                <span className="mono muted">
+                  CURRENT OPERATIONS
+                </span>
+
                 <h3>Active Missions</h3>
               </div>
 
               <button className="text-button">
-                View all <ChevronRight size={15} />
+                View all
+                <ChevronRight size={15} />
               </button>
+
             </div>
 
             <div className="mission-table">
@@ -288,7 +312,17 @@ function Dashboard({ onNavigate }) {
   );
 }
 
-function NavItem({ icon, label, active, onClick }) {
+
+/* =========================================
+   NAV ITEM
+========================================= */
+
+function NavItem({
+  icon,
+  label,
+  active,
+  onClick,
+}) {
   return (
     <button
       className={`nav-item ${active ? "active" : ""}`}
@@ -300,33 +334,78 @@ function NavItem({ icon, label, active, onClick }) {
   );
 }
 
-function Metric({ icon, label, value }) {
+
+/* =========================================
+   METRIC
+========================================= */
+
+function Metric({
+  icon,
+  label,
+  value,
+}) {
   return (
     <div className="metric-card">
-      <div className="metric-icon">{icon}</div>
-      <span className="mono muted">{label}</span>
-      <strong>{value}</strong>
+
+      <div className="metric-icon">
+        {icon}
+      </div>
+
+      <span className="mono muted">
+        {label}
+      </span>
+
+      <strong>
+        {value}
+      </strong>
+
     </div>
   );
 }
 
-function EconomyRow({ label, value, success, danger }) {
+
+/* =========================================
+   ECONOMY ROW
+========================================= */
+
+function EconomyRow({
+  label,
+  value,
+  success,
+  danger,
+}) {
   return (
     <div className="economy-row">
+
       <span>{label}</span>
 
       <strong
         className={
-          success ? "success" : danger ? "danger" : ""
+          success
+            ? "success"
+            : danger
+            ? "danger"
+            : ""
         }
       >
         {value}
       </strong>
+
     </div>
   );
 }
 
-function Mission({ id, route, progress, agents }) {
+
+/* =========================================
+   MISSION
+========================================= */
+
+function Mission({
+  id,
+  route,
+  progress,
+  agents,
+}) {
   return (
     <div className="mission-row">
 
@@ -335,25 +414,51 @@ function Mission({ id, route, progress, agents }) {
       </span>
 
       <div className="mission-route">
-        <strong>{route}</strong>
-        <span>{agents}</span>
+
+        <strong>
+          {route}
+        </strong>
+
+        <span>
+          {agents}
+        </span>
+
       </div>
 
       <div className="progress-wrapper">
+
         <div className="progress-label">
-          <span>Progress</span>
-          <strong>{progress}</strong>
+
+          <span>
+            Progress
+          </span>
+
+          <strong>
+            {progress}
+          </strong>
+
         </div>
 
         <div className="progress">
-          <div style={{ width: progress }} />
+
+          <div
+            style={{
+              width: progress,
+            }}
+          />
+
         </div>
+
       </div>
 
-      <ChevronRight size={17} className="muted" />
+      <ChevronRight
+        size={17}
+        className="muted"
+      />
 
     </div>
   );
 }
+
 
 export default Dashboard;
