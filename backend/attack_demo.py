@@ -4,6 +4,7 @@ from backend.models import Agent
 from backend.tasks import create_subtask
 from backend.escrow import lock_escrow
 from backend.settlement import settle_task
+from backend.marketplace import generate_bids, select_best_agent
 from intelligence.scoring import calculate_marketplace_score
 
 
@@ -17,6 +18,14 @@ def run_attack_demo(
     A Rogue hotel agent is deliberately injected into a task
     to test whether the zero-trust verification and escrow
     system can protect the user.
+
+    If the Rogue agent fails verification, the system:
+    1. Refunds the user's escrow
+    2. Penalizes the Rogue agent
+    3. Re-runs marketplace selection
+    4. Selects a trusted replacement
+    5. Verifies the recovery result
+    6. Releases payment only after successful verification
     """
 
     # ========================================================
@@ -34,14 +43,14 @@ def run_attack_demo(
             "HotelBot-Rogue not found. Run /demo/setup first."
         )
 
-    # Save values before the attack
+    # Save values before attack
     reputation_before = rogue.reputation
     success_rate_before = rogue.success_rate
     fraud_flags_before = rogue.fraud_flags
     wallet_before = rogue.wallet_balance
 
     # ========================================================
-    # 2. CREATE A HOTEL SUBTASK FOR THE ATTACK TEST
+    # 2. CREATE ATTACK SUBTASK
     # ========================================================
 
     subtask = create_subtask(
@@ -51,29 +60,30 @@ def run_attack_demo(
         15
     )
 
-    # Rogue tries to attract the system using a very cheap bid
+    # Malicious agent gives an unrealistically low bid
     rogue_bid = 5.0
 
-    # Calculate Rogue's marketplace score before attack
     score_before = calculate_marketplace_score(
         rogue,
         rogue_bid
     )
 
     # ========================================================
-    # 3. SIMULATE COMPROMISED AGENT SELECTION
+    # 3. FORCE ROGUE EXECUTION
     # ========================================================
     #
     # IMPORTANT:
-    # Rogue did NOT defeat the normal intelligence scoring.
+    #
+    # Rogue is NOT selected by the normal marketplace.
     #
     # We deliberately inject Rogue to simulate:
     #
     # - compromised routing
-    # - manipulated selection
-    # - malicious agent execution
+    # - manipulated agent selection
+    # - adversarial execution
     #
-    # This allows us to test the zero-trust safety layer.
+    # This tests whether verification + escrow still
+    # protect the user even when selection is compromised.
     # ========================================================
 
     subtask.assigned_agent_id = rogue.id
@@ -82,7 +92,7 @@ def run_attack_demo(
     db.commit()
 
     # ========================================================
-    # 4. LOCK PAYMENT IN ESCROW
+    # 4. LOCK ROGUE PAYMENT IN ESCROW
     # ========================================================
 
     escrow = lock_escrow(
@@ -94,7 +104,7 @@ def run_attack_demo(
     )
 
     # ========================================================
-    # 5. ROGUE RETURNS A MALICIOUS / FAKE RESULT
+    # 5. MALICIOUS AGENT RETURNS FAKE RESULT
     # ========================================================
 
     malicious_result = {
@@ -108,10 +118,6 @@ def run_attack_demo(
     # ========================================================
     # 6. INDEPENDENT VERIFICATION
     # ========================================================
-    #
-    # The verifier does NOT trust the agent's own claim.
-    # The fake result fails verification.
-    # ========================================================
 
     verification = {
         "score": 20,
@@ -123,16 +129,14 @@ def run_attack_demo(
     }
 
     # ========================================================
-    # 7. SETTLEMENT
+    # 7. SETTLEMENT FOR FAILED RESULT
     # ========================================================
     #
-    # Because verification failed:
+    # Since verification failed:
     #
-    #   escrow -> REFUNDED
-    #   Rogue  -> NOT PAID
-    #   reputation -> PENALIZED
-    #
-    # settle_task() performs the actual backend operations.
+    # escrow -> REFUNDED
+    # Rogue -> NOT PAID
+    # reputation -> PENALIZED
     # ========================================================
 
     transaction = settle_task(
@@ -145,12 +149,7 @@ def run_attack_demo(
 
     subtask.status = "FAILED"
 
-    # ========================================================
-    # 8. FRAUD PENALTY
-    # ========================================================
-
-    # This particular failure is an adversarial/fraud case,
-    # therefore increase the fraud flag.
+    # This failure is classified as fraud
     rogue.fraud_flags += 1
 
     db.commit()
@@ -159,7 +158,7 @@ def run_attack_demo(
     db.refresh(escrow)
 
     # ========================================================
-    # 9. RECALCULATE MARKETPLACE SCORE
+    # 8. RECALCULATE ROGUE TRUST SCORE
     # ========================================================
 
     score_after = calculate_marketplace_score(
@@ -168,7 +167,105 @@ def run_attack_demo(
     )
 
     # ========================================================
-    # 10. RETURN EXPLAINABLE ATTACK REPORT
+    # 9. AUTOMATIC RECOVERY STARTS
+    # ========================================================
+    #
+    # The system does NOT stop after detecting the attack.
+    #
+    # It creates a fresh hotel task and lets normal agents
+    # compete again using marketplace + trust scoring.
+    # ========================================================
+
+    recovery_subtask = create_subtask(
+        db,
+        task.id,
+        "hotel",
+        15
+    )
+
+    # ========================================================
+    # 10. GENERATE RECOVERY BIDS
+    # ========================================================
+
+    generate_bids(
+        db,
+        recovery_subtask
+    )
+
+    # ========================================================
+    # 11. SELECT TRUSTED REPLACEMENT
+    # ========================================================
+    recovery_selection = select_best_agent(
+        db,
+        recovery_subtask.id
+    )
+
+
+    if not recovery_selection:
+        raise ValueError(
+            "No trusted recovery agent available."
+        )
+
+    recovery_agent = recovery_selection["agent"]
+    recovery_bid = recovery_selection["bid"]
+    recovery_score = recovery_selection["score"]
+    
+    # 12. LOCK NEW PAYMENT IN ESCROW
+    # ========================================================
+
+    recovery_escrow = lock_escrow(
+        db=db,
+        user_id=task.user_id,
+        subtask_id=recovery_subtask.id,
+        agent_id=recovery_agent.id,
+        amount=recovery_bid.amount
+    )
+
+    # ========================================================
+    # 13. TRUSTED AGENT RETURNS VALID RESULT
+    # ========================================================
+
+    recovery_result = {
+        "type": "hotel",
+        "name": "Verified Mumbai Hotel",
+        "city": task.destination,
+        "price_per_night": 140,
+        "provider_verified": True
+    }
+
+    # ========================================================
+    # 14. VERIFY RECOVERY RESULT
+    # ========================================================
+
+    recovery_verification = {
+        "score": 95,
+        "passed": True,
+        "reason": (
+            "Recovery result passed all verification checks."
+        )
+    }
+
+    # ========================================================
+    # 15. RELEASE PAYMENT TO TRUSTED AGENT
+    # ========================================================
+
+    recovery_transaction = settle_task(
+        db=db,
+        escrow_id=recovery_escrow.id,
+        user_id=task.user_id,
+        agent_id=recovery_agent.id,
+        passed=True
+    )
+
+    recovery_subtask.status = "COMPLETED"
+
+    db.commit()
+
+    db.refresh(recovery_agent)
+    db.refresh(recovery_escrow)
+
+    # ========================================================
+    # 16. RETURN COMPLETE ATTACK + RECOVERY REPORT
     # ========================================================
 
     return {
@@ -181,46 +278,114 @@ def run_attack_demo(
                 "Rogue agent was deliberately injected to "
                 "simulate compromised agent selection."
             ),
+
             "bid": rogue_bid,
+
             "malicious_result": malicious_result
         },
 
         "verification": {
             "score": verification["score"],
+
             "passed": verification["passed"],
+
             "reason": verification["reason"]
         },
 
         "payment": {
             "escrow_id": escrow.id,
+
             "escrow_status": escrow.status,
+
             "transaction_id": transaction.id,
-            "transaction_type": transaction.transaction_type,
+
+            "transaction_type":
+                transaction.transaction_type,
+
             "agent_paid": False
         },
 
         "trust_update": {
-            "reputation_before": reputation_before,
-            "reputation_after": rogue.reputation,
+            "reputation_before":
+                reputation_before,
 
-            "success_rate_before": success_rate_before,
-            "success_rate_after": rogue.success_rate,
+            "reputation_after":
+                rogue.reputation,
 
-            "fraud_flags_before": fraud_flags_before,
-            "fraud_flags_after": rogue.fraud_flags,
+            "success_rate_before":
+                success_rate_before,
 
-            "marketplace_score_before": score_before,
-            "marketplace_score_after": score_after
+            "success_rate_after":
+                rogue.success_rate,
+
+            "fraud_flags_before":
+                fraud_flags_before,
+
+            "fraud_flags_after":
+                rogue.fraud_flags,
+
+            "marketplace_score_before":
+                score_before,
+
+            "marketplace_score_after":
+                score_after
         },
 
         "wallet_protection": {
-            "agent_wallet_before": wallet_before,
-            "agent_wallet_after": rogue.wallet_balance,
+            "agent_wallet_before":
+                wallet_before,
 
-            "money_received_by_rogue": (
-                rogue.wallet_balance - wallet_before
-            )
+            "agent_wallet_after":
+                rogue.wallet_balance,
+
+            "money_received_by_rogue":
+                rogue.wallet_balance
+                - wallet_before
         },
 
-        "final_status": "ATTACK_BLOCKED"
+        # ====================================================
+        # AUTOMATIC RECOVERY REPORT
+        # ====================================================
+
+        "recovery": {
+            "triggered": True,
+
+            "replacement_agent":
+                recovery_agent.name,
+
+            "replacement_bid":
+                recovery_bid.amount,
+
+            "selection_score":
+                recovery_score,
+
+            "result":
+                recovery_result,
+
+            "verification":
+                recovery_verification,
+
+            "payment": {
+                "escrow_id":
+                    recovery_escrow.id,
+
+                "escrow_status":
+                    recovery_escrow.status,
+
+                "transaction_id":
+                    recovery_transaction.id,
+
+                "transaction_type":
+                    recovery_transaction.transaction_type,
+
+                "agent_paid":
+                    True
+            },
+
+            "status":
+                "RECOVERED"
+        },
+
+        "final_status":
+            "ATTACK_BLOCKED_AND_TASK_RECOVERED"
     }
