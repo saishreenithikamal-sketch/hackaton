@@ -340,6 +340,14 @@ function LiveMissionControl({ onBack, mission }) {
 
 
           <div className="mission-nav">
+          <div
+  className="mission-nav-item"
+  onClick={onBack}
+  style={{ cursor: "pointer", marginBottom: "18px" }}
+>
+  <ArrowLeft size={17} />
+  Back to Overview
+</div>
 
   <div
     className={`mission-nav-item ${
