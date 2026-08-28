@@ -1,16 +1,16 @@
 from sqlalchemy.orm import Session
 
-from models import (
+from backend.models import (
     Transaction,
     Escrow
 )
 
-from escrow import (
+from backend.escrow import (
     release_escrow,
     refund_escrow
 )
 
-from reputation import update_reputation
+from backend.reputation import update_reputation
 
 
 def settle_task(
@@ -20,6 +20,7 @@ def settle_task(
     agent_id: int,
     passed: bool
 ):
+    # Get escrow record
     escrow = (
         db.query(Escrow)
         .filter(Escrow.id == escrow_id)
@@ -31,8 +32,13 @@ def settle_task(
 
     amount = escrow.amount
 
+    # ========================================================
+    # VERIFICATION PASSED
+    # ========================================================
+
     if passed:
 
+        # Release escrow payment to agent
         release_escrow(
             db,
             escrow_id
@@ -48,8 +54,13 @@ def settle_task(
             status="COMPLETED"
         )
 
+    # ========================================================
+    # VERIFICATION FAILED
+    # ========================================================
+
     else:
 
+        # Refund escrow money to user
         refund_escrow(
             db,
             escrow_id,
@@ -66,8 +77,10 @@ def settle_task(
             status="COMPLETED"
         )
 
+    # Store transaction
     db.add(transaction)
 
+    # Update agent reputation
     update_reputation(
         db,
         agent_id,

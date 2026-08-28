@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from models import Agent
+from backend.models import Agent
 
 
 def create_agent(

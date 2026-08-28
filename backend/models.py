@@ -10,7 +10,7 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import relationship
 
-from database import Base
+from backend.database import Base
 
 
 # ============================================================
@@ -48,7 +48,14 @@ class Agent(Base):
     skills = Column(String, default="")
 
     reputation = Column(Float, default=50.0)
+    accuracy = Column(Float, default=50.0)
+    reliability = Column(Float, default=50.0)
+    success_rate = Column(Float, default=0.0)
+    cost_efficiency = Column(Float, default=50.0)
 
+    tasks_completed = Column(Integer, default=0)
+    disputes = Column(Integer, default=0)
+    fraud_flags = Column(Integer, default=0)
     success_rate = Column(Float, default=0.0)
 
     wallet_balance = Column(Float, default=0.0)

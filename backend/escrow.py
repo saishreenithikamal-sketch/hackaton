@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 
-from models import User, Agent, Escrow, Subtask
-
+from backend.models import User, Agent, Escrow, Subtask
 
 def lock_escrow(
     db: Session,

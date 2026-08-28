@@ -1,7 +1,12 @@
 from sqlalchemy.orm import Session
 
-from models import Agent, Subtask, Bid
+from backend.models import Agent, Subtask, Bid
+from intelligence.scoring import calculate_marketplace_score
 
+
+# ============================================================
+# CREATE BID
+# ============================================================
 
 def create_bid(
     db: Session,
@@ -23,6 +28,10 @@ def create_bid(
     return bid
 
 
+# ============================================================
+# GENERATE BIDS
+# ============================================================
+
 def generate_bids(
     db: Session,
     subtask: Subtask
@@ -30,8 +39,8 @@ def generate_bids(
     """
     Demo bidding system.
 
-    In the real version, agents would independently
-    submit bids.
+    Active agents matching the subtask type
+    automatically submit bids.
     """
 
     agents = (
@@ -52,16 +61,22 @@ def generate_bids(
             amount = subtask.reward
 
         elif agent.reputation >= 70:
-            amount = max(1, subtask.reward - 2)
+            amount = max(
+                1,
+                subtask.reward - 2
+            )
 
         else:
-            amount = max(1, subtask.reward - 5)
+            amount = max(
+                1,
+                subtask.reward - 5
+            )
 
         bid = create_bid(
-            db,
-            subtask.id,
-            agent.id,
-            amount
+            db=db,
+            subtask_id=subtask.id,
+            agent_id=agent.id,
+            amount=amount
         )
 
         bids.append(bid)
@@ -69,13 +84,25 @@ def generate_bids(
     return bids
 
 
+# ============================================================
+# SELECT BEST AGENT
+# ============================================================
+
 def select_best_agent(
     db: Session,
     subtask_id: int
 ):
+    """
+    Select the best agent using the
+    intelligence trust/risk scoring engine.
+    """
+
+    # Get all bids for this subtask
     bids = (
         db.query(Bid)
-        .filter(Bid.subtask_id == subtask_id)
+        .filter(
+            Bid.subtask_id == subtask_id
+        )
         .all()
     )
 
@@ -84,55 +111,95 @@ def select_best_agent(
 
     scored_bids = []
 
+    # --------------------------------------------------------
+    # SCORE EVERY AGENT
+    # --------------------------------------------------------
+
     for bid in bids:
 
         agent = (
             db.query(Agent)
-            .filter(Agent.id == bid.agent_id)
+            .filter(
+                Agent.id == bid.agent_id
+            )
             .first()
         )
 
         if not agent:
             continue
 
-        # Higher reputation + lower price = better
-        score = (
-            agent.reputation * 0.7
-            + agent.success_rate * 0.2
-            - bid.amount * 0.1
+        # ----------------------------------------------------
+        # INTELLIGENCE ENGINE
+        # ----------------------------------------------------
+
+        score = calculate_marketplace_score(
+            agent,
+            bid.amount
         )
 
         scored_bids.append(
-            (score, bid, agent)
+            (
+                score,
+                bid,
+                agent
+            )
         )
 
     if not scored_bids:
         return None
+
+    # --------------------------------------------------------
+    # RANK AGENTS
+    # --------------------------------------------------------
 
     scored_bids.sort(
         key=lambda x: x[0],
         reverse=True
     )
 
-    winning_score, winning_bid, winning_agent = scored_bids[0]
+    winning_score, winning_bid, winning_agent = (
+        scored_bids[0]
+    )
 
-    # Mark winner
+    # --------------------------------------------------------
+    # ACCEPT WINNER
+    # --------------------------------------------------------
+
     winning_bid.status = "ACCEPTED"
 
-    # Mark everyone else rejected
+    # --------------------------------------------------------
+    # REJECT OTHER BIDS
+    # --------------------------------------------------------
+
     for _, bid, _ in scored_bids[1:]:
         bid.status = "REJECTED"
 
+    # --------------------------------------------------------
+    # ASSIGN WINNING AGENT TO SUBTASK
+    # --------------------------------------------------------
+
     subtask = (
         db.query(Subtask)
-        .filter(Subtask.id == subtask_id)
+        .filter(
+            Subtask.id == subtask_id
+        )
         .first()
     )
 
-    subtask.assigned_agent_id = winning_agent.id
+    if not subtask:
+        return None
+
+    subtask.assigned_agent_id = (
+        winning_agent.id
+    )
+
     subtask.status = "ASSIGNED"
 
     db.commit()
+
+    # --------------------------------------------------------
+    # RETURN RESULT
+    # --------------------------------------------------------
 
     return {
         "agent": winning_agent,

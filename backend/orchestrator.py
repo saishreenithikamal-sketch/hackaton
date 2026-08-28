@@ -1,17 +1,17 @@
 from sqlalchemy.orm import Session
 
-from models import Task, Subtask
+from backend.models import Task, Subtask
 
-from tasks import create_subtask
+from backend.tasks import create_subtask
 
 from marketplace import (
     generate_bids,
     select_best_agent
 )
 
-from escrow import lock_escrow
+from backend.escrow import lock_escrow
 
-from settlement import settle_task
+from backend.settlement import settle_task
 
 
 def decompose_trip(

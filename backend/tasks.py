@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from models import User, Task, Subtask
+from backend.models import User, Task, Subtask
 
 
 def create_user(
