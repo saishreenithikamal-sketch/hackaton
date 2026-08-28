@@ -22,7 +22,7 @@ function LiveMissionControl({ onBack, mission }) {
 
   const [attackLoading, setAttackLoading] = useState(false);
   const [attackResult, setAttackResult] = useState(null);
-
+  const [activeTab, setActiveTab] = useState("live");
   const backend = mission?.backendResult || {};
   const results = backend?.results || [];
 
@@ -341,27 +341,51 @@ function LiveMissionControl({ onBack, mission }) {
 
           <div className="mission-nav">
 
-            <div className="mission-nav-item active">
-              <Radio size={17} />
-              Live Control
-            </div>
+  <div
+    className={`mission-nav-item ${
+      activeTab === "live" ? "active" : ""
+    }`}
+    onClick={() => setActiveTab("live")}
+    style={{ cursor: "pointer" }}
+  >
+    <Radio size={17} />
+    Live Control
+  </div>
 
-            <div className="mission-nav-item">
-              <Bot size={17} />
-              Agent Activity
-            </div>
+  <div
+    className={`mission-nav-item ${
+      activeTab === "activity" ? "active" : ""
+    }`}
+    onClick={() => setActiveTab("activity")}
+    style={{ cursor: "pointer" }}
+  >
+    <Bot size={17} />
+    Agent Activity
+  </div>
 
-            <div className="mission-nav-item">
-              <ShieldCheck size={17} />
-              Verification
-            </div>
+    <div
+      className={`mission-nav-item ${
+        activeTab === "verification" ? "active" : ""
+      }`}
+      onClick={() => setActiveTab("verification")}
+      style={{ cursor: "pointer" }}
+    >
+      <ShieldCheck size={17} />
+      Verification
+    </div>
 
-            <div className="mission-nav-item">
-              <Coins size={17} />
-              Settlements
-            </div>
+    <div
+      className={`mission-nav-item ${
+        activeTab === "settlements" ? "active" : ""
+      }`}
+      onClick={() => setActiveTab("settlements")}
+      style={{ cursor: "pointer" }}
+    >
+      <Coins size={17} />
+      Settlements
+    </div>
 
-          </div>
+  </div>
 
 
           <button
@@ -380,7 +404,598 @@ function LiveMissionControl({ onBack, mission }) {
         <main className="control-main">
 
           <div className="control-container">
+          {/* ========================================================= */}
+{/* AGENT ACTIVITY TAB */}
+{/* ========================================================= */}
 
+{activeTab === "activity" && (
+  <>
+    <div className="mission-header">
+      <div>
+        <div className="mission-kicker">
+          AUTONOMOUS EXECUTION TRACE / #AG-{tripId}
+        </div>
+
+        <h1>Agent Activity</h1>
+
+        <p>
+          Real-time execution history for {origin} → {destination}
+        </p>
+      </div>
+
+      <div className="mission-live">
+        <span className="live-dot"></span>
+        EXECUTION COMPLETE
+      </div>
+    </div>
+
+    <section className="activity-card">
+      <div className="card-heading">
+        <div>
+          <span>MISSION TIMELINE</span>
+          <h2>Autonomous Agent Execution</h2>
+        </div>
+
+        <Bot />
+      </div>
+
+      <ActivityRow
+        time="STEP 1"
+        agent="BOSS AGENT"
+        message={`Mission decomposed into ${results.length} specialist tasks`}
+        status="DONE"
+      />
+
+      {flightResult && (
+        <ActivityRow
+          time="STEP 2"
+          agent={flightResult.agent || "FLIGHT AGENT"}
+          message={`Won flight task · Bid ${flightResult.bid} CRD · Verification ${flightResult.verification?.score}/100`}
+          status={
+            flightResult.verification?.passed
+              ? "VERIFIED"
+              : "FAILED"
+          }
+        />
+      )}
+
+      {hotelResult && (
+        <ActivityRow
+          time="STEP 3"
+          agent={hotelResult.agent || "HOTEL AGENT"}
+          message={`Won hotel task · Bid ${hotelResult.bid} CRD · Verification ${hotelResult.verification?.score}/100`}
+          status={
+            hotelResult.verification?.passed
+              ? "VERIFIED"
+              : "FAILED"
+          }
+        />
+      )}
+
+      {activityResult && (
+        <ActivityRow
+          time="STEP 4"
+          agent={activityResult.agent || "ACTIVITY AGENT"}
+          message={`Won activity task · Bid ${activityResult.bid} CRD · Verification ${activityResult.verification?.score}/100`}
+          status={
+            activityResult.verification?.passed
+              ? "VERIFIED"
+              : "FAILED"
+          }
+        />
+      )}
+
+      <ActivityRow
+        time="STEP 5"
+        agent="ESCROW & SETTLEMENT"
+        message={`${totalRewards} CRD released after successful verification`}
+        status="SETTLED"
+      />
+
+      {attackResult && (
+        <>
+          <div
+            style={{
+              margin: "28px 0 12px",
+              padding: "12px 16px",
+              border: "1px solid rgba(255,77,77,0.45)",
+              color: "#ff6b6b",
+              fontWeight: "800",
+              letterSpacing: "1px",
+            }}
+          >
+            ⚠ SECURITY INCIDENT DETECTED
+          </div>
+
+          <ActivityRow
+            time="ATTACK"
+            agent={attackResult.result.attacking_agent}
+            message={`Malicious result submitted · Bid ${attackResult.result.attack.bid} CRD`}
+            status="BLOCKED"
+          />
+
+          <ActivityRow
+            time="VERIFY"
+            agent="VERIFIER AGENT"
+            message={`Rogue output rejected · Score ${attackResult.result.verification.score}/100`}
+            status="FAILED"
+          />
+
+          <ActivityRow
+            time="ESCROW"
+            agent="SETTLEMENT LAYER"
+            message="Payment blocked · Escrow refunded · Rogue received 0 CRD"
+            status="REFUNDED"
+          />
+
+          <ActivityRow
+            time="TRUST"
+            agent={attackResult.result.attacking_agent}
+            message={`Fraud flags ${attackResult.result.trust_update.fraud_flags_before} → ${attackResult.result.trust_update.fraud_flags_after}`}
+            status="PENALIZED"
+          />
+
+          <ActivityRow
+            time="RECOVER"
+            agent={
+              attackResult.result.recovery.replacement_agent
+            }
+            message={`Trusted replacement selected · Verification ${attackResult.result.recovery.verification.score}/100`}
+            status="RECOVERED"
+          />
+        </>
+      )}
+    </section>
+  </>
+)}
+
+
+{/* ========================================================= */}
+{/* VERIFICATION TAB */}
+{/* ========================================================= */}
+
+{activeTab === "verification" && (
+  <>
+    <div className="mission-header">
+      <div>
+        <div className="mission-kicker">
+          ZERO-TRUST SECURITY / #AG-{tripId}
+        </div>
+
+        <h1>Independent Verification</h1>
+
+        <p>
+          No autonomous agent receives payment until its output is verified.
+        </p>
+      </div>
+
+      <div className="mission-live">
+        <ShieldCheck size={17} />
+        TRUST LAYER ACTIVE
+      </div>
+    </div>
+
+    <section className="boss-card">
+      <div className="boss-icon">
+        <ShieldCheck />
+      </div>
+
+      <div className="boss-content">
+        <div className="boss-heading">
+          <div>
+            <span className="section-kicker">
+              VERIFICATION ENGINE
+            </span>
+
+            <h2>
+              {verifiedCount}/{results.length} NORMAL TASKS VERIFIED
+            </h2>
+          </div>
+
+          <span className="boss-status">
+            SECURE
+          </span>
+        </div>
+
+        <p>
+          Every specialist output is independently checked before
+          escrow settlement is authorized.
+        </p>
+      </div>
+    </section>
+
+    <div className="agent-grid">
+
+      {results.map((result, index) => {
+
+        const labels = [
+          "FLIGHT OUTPUT",
+          "HOTEL OUTPUT",
+          "ACTIVITY OUTPUT",
+        ];
+
+        return (
+          <div
+            className="agent-card completed"
+            key={result.subtask_id || index}
+          >
+            <div className="agent-card-top">
+              <div className="agent-icon">
+                <ShieldCheck />
+              </div>
+
+              <span className="agent-status completed">
+                {result.verification?.passed
+                  ? "VERIFIED"
+                  : "REJECTED"}
+              </span>
+            </div>
+
+            <h3>{labels[index] || "AGENT OUTPUT"}</h3>
+
+            <span className="agent-type">
+              {result.agent}
+            </span>
+
+            <div className="agent-task">
+              <span>VERIFICATION SCORE</span>
+
+              <p
+                style={{
+                  fontSize: "28px",
+                  fontWeight: "800",
+                  marginTop: "8px",
+                }}
+              >
+                {result.verification?.score ?? "—"} / 100
+              </p>
+            </div>
+
+            <div className="agent-result">
+              <span>DECISION</span>
+
+              <strong>
+                {result.verification?.passed
+                  ? "✓ OUTPUT ACCEPTED"
+                  : "✕ OUTPUT REJECTED"}
+              </strong>
+            </div>
+
+            <div className="agent-reward">
+              <span>PAYMENT RULE</span>
+
+              <strong>
+                {result.verification?.passed
+                  ? "PAYMENT AUTHORIZED"
+                  : "PAYMENT BLOCKED"}
+              </strong>
+            </div>
+          </div>
+        );
+      })}
+
+    </div>
+
+
+    {attackResult && (
+      <section
+        className="boss-card"
+        style={{
+          border: "1px solid #ff4d4d",
+          marginTop: "24px",
+        }}
+      >
+        <div className="boss-icon">
+          <AlertTriangle />
+        </div>
+
+        <div className="boss-content">
+          <div className="boss-heading">
+            <div>
+              <span className="section-kicker">
+                MALICIOUS OUTPUT
+              </span>
+
+              <h2>
+                {attackResult.result.attacking_agent}
+              </h2>
+            </div>
+
+            <span
+              className="boss-status"
+              style={{ color: "#ff6b6b" }}
+            >
+              REJECTED
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: "12px",
+              marginTop: "16px",
+            }}
+          >
+            <AttackMetric
+              label="VERIFICATION SCORE"
+              value={`${attackResult.result.verification.score} / 100 ❌`}
+            />
+
+            <AttackMetric
+              label="DECISION"
+              value="OUTPUT REJECTED"
+            />
+
+            <AttackMetric
+              label="PAYMENT"
+              value="BLOCKED"
+            />
+
+            <AttackMetric
+              label="ESCROW"
+              value={
+                attackResult.result.payment.escrow_status
+              }
+            />
+          </div>
+
+          <p style={{ marginTop: "16px" }}>
+            {attackResult.result.verification.reason}
+          </p>
+
+          <div
+            style={{
+              marginTop: "20px",
+              padding: "16px",
+              border: "1px solid #00e5ff",
+            }}
+          >
+            <span className="section-kicker">
+              AUTOMATIC RECOVERY
+            </span>
+
+            <h3>
+              {
+                attackResult.result.recovery
+                  .replacement_agent
+              }
+            </h3>
+
+            <p>
+              Replacement output verified at{" "}
+              <strong>
+                {
+                  attackResult.result.recovery
+                    .verification.score
+                }/100 ✓
+              </strong>
+            </p>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section
+      className="verification-card"
+      style={{ marginTop: "24px" }}
+    >
+      <div className="verification-status">
+        <CheckCircle2 />
+
+        <div>
+          <strong>
+            ZERO TRUST → VERIFY → THEN PAY
+          </strong>
+
+          <p>
+            Verification is a mandatory gate between autonomous
+            execution and financial settlement.
+          </p>
+        </div>
+      </div>
+    </section>
+  </>
+)}
+
+
+{/* ========================================================= */}
+{/* SETTLEMENTS TAB */}
+{/* ========================================================= */}
+
+{activeTab === "settlements" && (
+  <>
+    <div className="mission-header">
+      <div>
+        <div className="mission-kicker">
+          AUTONOMOUS ECONOMY / #AG-{tripId}
+        </div>
+
+        <h1>Escrow & Settlements</h1>
+
+        <p>
+          Verified work is paid automatically. Failed work is refunded.
+        </p>
+      </div>
+
+      <div className="mission-live">
+        <Coins size={17} />
+        LEDGER ACTIVE
+      </div>
+    </div>
+
+
+    <section className="budget-card">
+
+      <div className="budget-heading">
+        <div>
+          <span>MISSION ECONOMY</span>
+          <h2>Settlement Overview</h2>
+        </div>
+
+        <Coins />
+      </div>
+
+
+      <div className="budget-metrics">
+
+        <Metric
+          label="AGENT BUDGET"
+          value={`${agentBudget} CRD`}
+        />
+
+        <Metric
+          label="TOTAL RELEASED"
+          value={`${totalRewards} CRD`}
+        />
+
+        <Metric
+          label="VERIFIED TASKS"
+          value={`${verifiedCount}/${results.length}`}
+        />
+
+        <Metric
+          label="REMAINING"
+          value={`${Math.max(
+            agentBudget - totalRewards,
+            0
+          )} CRD`}
+        />
+
+      </div>
+
+    </section>
+
+
+    <section
+      className="activity-card"
+      style={{ marginTop: "24px" }}
+    >
+
+      <div className="card-heading">
+        <div>
+          <span>ESCROW LEDGER</span>
+          <h2>Transaction History</h2>
+        </div>
+
+        <Wallet />
+      </div>
+
+
+      {flightResult && (
+        <ActivityRow
+          time="FLIGHT"
+          agent={flightResult.agent}
+          message={`${flightResult.bid} CRD · Verification ${flightResult.verification?.score}/100`}
+          status={
+            flightResult.verification?.passed
+              ? "RELEASED"
+              : "REFUNDED"
+          }
+        />
+      )}
+
+
+      {hotelResult && (
+        <ActivityRow
+          time="HOTEL"
+          agent={hotelResult.agent}
+          message={`${hotelResult.bid} CRD · Verification ${hotelResult.verification?.score}/100`}
+          status={
+            hotelResult.verification?.passed
+              ? "RELEASED"
+              : "REFUNDED"
+          }
+        />
+      )}
+
+
+      {activityResult && (
+        <ActivityRow
+          time="ACTIVITY"
+          agent={activityResult.agent}
+          message={`${activityResult.bid} CRD · Verification ${activityResult.verification?.score}/100`}
+          status={
+            activityResult.verification?.passed
+              ? "RELEASED"
+              : "REFUNDED"
+          }
+        />
+      )}
+
+
+      {attackResult && (
+        <>
+          <div
+            style={{
+              margin: "28px 0 12px",
+              padding: "12px 16px",
+              border:
+                "1px solid rgba(255,77,77,0.45)",
+              color: "#ff6b6b",
+              fontWeight: "800",
+            }}
+          >
+            SECURITY INCIDENT SETTLEMENT
+          </div>
+
+          <ActivityRow
+            time="ROGUE"
+            agent={
+              attackResult.result.attacking_agent
+            }
+            message={`${attackResult.result.attack.bid} CRD attempted · Rogue received ${attackResult.result.wallet_protection.money_received_by_rogue} CRD`}
+            status="REFUNDED"
+          />
+
+          <ActivityRow
+            time="RECOVERY"
+            agent={
+              attackResult.result.recovery
+                .replacement_agent
+            }
+            message={`${attackResult.result.recovery.replacement_bid} CRD · Verification ${attackResult.result.recovery.verification.score}/100`}
+            status="RELEASED"
+          />
+        </>
+      )}
+
+    </section>
+
+
+    {attackResult && (
+      <section
+        className="verification-card"
+        style={{ marginTop: "24px" }}
+      >
+        <div className="verification-status">
+          <ShieldCheck />
+
+          <div>
+            <strong>
+              USER FUNDS PROTECTED
+            </strong>
+
+            <p>
+              Malicious agent received{" "}
+              {
+                attackResult.result.wallet_protection
+                  .money_received_by_rogue
+              }{" "}
+              CRD. Failed verification caused the escrow
+              payment to be refunded automatically.
+            </p>
+          </div>
+        </div>
+      </section>
+    )}
+
+  </>
+)}
+
+            {activeTab === "live" && (
+              <>
 
             {/* MISSION HEADER */}
 
@@ -1284,6 +1899,9 @@ function LiveMissionControl({ onBack, mission }) {
               </div>
 
             </section>
+
+              </>
+            )}
 
           </div>
 
