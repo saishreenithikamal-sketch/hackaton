@@ -7,11 +7,15 @@ import "./App.css";
 function App() {
   const [screen, setScreen] = useState("dashboard");
 
-  const handleLaunch = (mission) => {
-  console.log("Mission launched:", mission);
+  const [activeMission, setActiveMission] = useState(null);
 
-  setScreen("live");
-};
+  const handleLaunch = (mission) => {
+    console.log("APP RECEIVED MISSION:", mission);
+
+    setActiveMission(mission);
+
+    setScreen("live");
+  };
 
   if (screen === "launch") {
     return (
@@ -21,16 +25,15 @@ function App() {
       />
     );
   }
-  
 
   if (screen === "live") {
-  return (
-    <LiveMissionControl
-      onBack={() => setScreen("dashboard")}
-    />
-  );
-}
-
+    return (
+      <LiveMissionControl
+        mission={activeMission}
+        onBack={() => setScreen("dashboard")}
+      />
+    );
+  }
 
   return (
     <Dashboard

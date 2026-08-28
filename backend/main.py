@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -44,6 +45,18 @@ app = FastAPI(
     description="Multi-agent travel planning economy",
     version="1.0"
 )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+         "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ============================================================
@@ -51,28 +64,20 @@ app = FastAPI(
 # ============================================================
 
 class TripRequest(BaseModel):
-
     name: str = "Demo User"
-
     source: str
     destination: str
     days: int
     travel_budget: float
-
     agent_budget: float = 100.0
 
 
 class AttackDemoRequest(BaseModel):
-
     name: str = "Demo User"
-
     source: str = "Chennai"
     destination: str = "Mumbai"
-
     days: int = 3
-
     travel_budget: float = 30000
-
     agent_budget: float = 100.0
 
 
@@ -106,9 +111,7 @@ def setup_demo(
     return {
         "message": "Demo environment ready",
         "user_id": user.id,
-        "agents": len(
-            get_all_agents(db)
-        )
+        "agents": len(get_all_agents(db))
     }
 
 
@@ -122,10 +125,10 @@ def attack_demo(
     db: Session = Depends(get_db)
 ):
 
-    # Make sure agents exist
+    # Make sure demo agents exist
     seed_agents(db)
 
-    # Create/get demo user
+    # Get/create demo user
     user = get_or_create_demo_user(
         db,
         request.name
@@ -210,7 +213,7 @@ def create_new_trip(
     # Make sure demo agents exist
     seed_agents(db)
 
-    # Create/get user
+    # Get/create user
     user = get_or_create_demo_user(
         db,
         request.name
@@ -227,7 +230,7 @@ def create_new_trip(
         agent_budget=request.agent_budget
     )
 
-    # Run Boss Agent
+    # Run the Boss Agent / Orchestrator
     results = run_trip(
         db,
         trip.id

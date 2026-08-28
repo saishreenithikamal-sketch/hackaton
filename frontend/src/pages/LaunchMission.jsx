@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   Activity,
   Search,
@@ -41,6 +42,7 @@ function LaunchMission({ onBack, onLaunch }) {
     "Eco-friendly",
   ]);
 
+  // Update form fields
   const updateField = (field, value) => {
     setForm((prev) => ({
       ...prev,
@@ -48,6 +50,7 @@ function LaunchMission({ onBack, onLaunch }) {
     }));
   };
 
+  // Select / deselect preferences
   const togglePreference = (preference) => {
     setPreferences((prev) =>
       prev.includes(preference)
@@ -56,9 +59,16 @@ function LaunchMission({ onBack, onLaunch }) {
     );
   };
 
-  const launch = (event) => {
+  // ------------------------------------------------
+  // LAUNCH MISSION + CONNECT TO FASTAPI BACKEND
+  // ------------------------------------------------
+
+  const launch = async (event) => {
     event.preventDefault();
 
+    console.log("LAUNCH BUTTON CLICKED");
+
+    // Check required fields
     if (
       !form.origin ||
       !form.destination ||
@@ -70,15 +80,58 @@ function LaunchMission({ onBack, onLaunch }) {
       return;
     }
 
-    const mission = {
-      ...form,
-      preferences,
-      status: "deploying",
+    // Data expected by FastAPI
+    const requestData = {
+      name: "Demo User",
+      source: form.origin,
+      destination: form.destination,
+      days: Number(form.duration),
+      travel_budget: Number(form.travelBudget),
+      agent_budget: Number(form.agentBudget || 100),
     };
 
-    console.log("MISSION CREATED:", mission);
+    console.log("SENDING TO BACKEND:", requestData);
 
-    onLaunch?.(mission);
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/trip/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("BACKEND ERROR:", errorText);
+
+        throw new Error(
+          `Backend request failed: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      console.log("BACKEND RESULT:", data);
+
+      // Send form + backend result to App.jsx
+      onLaunch?.({
+        ...form,
+        preferences,
+        backendResult: data,
+        tripId: data.trip_id,
+        status: "deployed",
+      });
+    } catch (error) {
+      console.error("MISSION ERROR:", error);
+
+      alert(
+        "Could not create the mission. Check the backend terminal."
+      );
+    }
   };
 
   return (
@@ -225,9 +278,12 @@ function LaunchMission({ onBack, onLaunch }) {
                     <input
                       value={form.origin}
                       onChange={(e) =>
-                        updateField("origin", e.target.value)
+                        updateField(
+                          "origin",
+                          e.target.value
+                        )
                       }
-                      placeholder="e.g. Toronto, Canada"
+                      placeholder="e.g. Chennai, India"
                     />
                   </Field>
 
@@ -238,9 +294,12 @@ function LaunchMission({ onBack, onLaunch }) {
                     <input
                       value={form.destination}
                       onChange={(e) =>
-                        updateField("destination", e.target.value)
+                        updateField(
+                          "destination",
+                          e.target.value
+                        )
                       }
-                      placeholder="e.g. New York, USA"
+                      placeholder="e.g. Mumbai, India"
                     />
                   </Field>
 
@@ -265,29 +324,42 @@ function LaunchMission({ onBack, onLaunch }) {
                         type="date"
                         value={form.startDate}
                         onChange={(e) =>
-                          updateField("startDate", e.target.value)
+                          updateField(
+                            "startDate",
+                            e.target.value
+                          )
                         }
                       />
                     </Field>
 
                     <Field label="DURATION (DAYS)">
+
                       <div className="input-with-suffix">
+
                         <input
                           type="number"
                           min="1"
                           value={form.duration}
                           onChange={(e) =>
-                            updateField("duration", e.target.value)
+                            updateField(
+                              "duration",
+                              e.target.value
+                            )
                           }
                           placeholder="3"
                         />
+
                         <span>DAYS</span>
+
                       </div>
+
                     </Field>
 
                     <div className="field full-width">
 
-                      <label>PLANNING DEADLINE (OPTIONAL)</label>
+                      <label>
+                        PLANNING DEADLINE (OPTIONAL)
+                      </label>
 
                       <div className="deadline-row">
 
@@ -321,6 +393,7 @@ function LaunchMission({ onBack, onLaunch }) {
 
                 </section>
 
+                {/* FINANCIAL */}
                 <section className="mission-card">
 
                   <SectionTitle
@@ -331,7 +404,9 @@ function LaunchMission({ onBack, onLaunch }) {
                   <div className="financial-fields">
 
                     <Field label="TRAVEL BUDGET">
+
                       <div className="currency-input">
+
                         <span>$</span>
 
                         <input
@@ -347,13 +422,16 @@ function LaunchMission({ onBack, onLaunch }) {
                         />
 
                         <small>USD</small>
+
                       </div>
+
                     </Field>
 
                     <Field
                       label="AGENT SERVICE BUDGET"
                       extra={<Info size={13} />}
                     >
+
                       <div className="currency-input">
 
                         <Coins size={15} />
@@ -416,11 +494,13 @@ function LaunchMission({ onBack, onLaunch }) {
                         togglePreference(preference)
                       }
                     >
+
                       {preferences.includes(preference) && (
                         <CheckCircle2 size={14} />
                       )}
 
                       {preference}
+
                     </button>
 
                   ))}
@@ -429,7 +509,9 @@ function LaunchMission({ onBack, onLaunch }) {
 
                 <div className="field instructions">
 
-                  <label>CUSTOM INSTRUCTIONS (OPTIONAL)</label>
+                  <label>
+                    CUSTOM INSTRUCTIONS (OPTIONAL)
+                  </label>
 
                   <textarea
                     value={form.instructions}
@@ -439,7 +521,7 @@ function LaunchMission({ onBack, onLaunch }) {
                         e.target.value
                       )
                     }
-                    placeholder="e.g., Prefer window seats, near city center hotels, avoid layovers in cold climates..."
+                    placeholder="e.g., Prefer window seats, near city center hotels..."
                     rows={4}
                   />
 
@@ -472,9 +554,11 @@ function LaunchMission({ onBack, onLaunch }) {
         </main>
 
       </div>
+
     </div>
   );
 }
+
 
 /* ---------------- COMPONENTS ---------------- */
 
@@ -494,6 +578,7 @@ function SidebarSection({ title, children }) {
   );
 }
 
+
 function SidebarItem({
   icon,
   label,
@@ -511,6 +596,7 @@ function SidebarItem({
   );
 }
 
+
 function SectionTitle({ icon, title }) {
   return (
     <div className="section-title">
@@ -523,7 +609,13 @@ function SectionTitle({ icon, title }) {
   );
 }
 
-function Field({ label, icon, extra, children }) {
+
+function Field({
+  label,
+  icon,
+  extra,
+  children,
+}) {
   return (
     <div className="field">
 
@@ -532,17 +624,19 @@ function Field({ label, icon, extra, children }) {
         {extra}
       </label>
 
-      <div className={`input-box ${icon ? "with-icon" : ""}`}>
-
+      <div
+        className={`input-box ${
+          icon ? "with-icon" : ""
+        }`}
+      >
         {icon}
-
         {children}
-
       </div>
 
     </div>
   );
 }
+
 
 function MissionFlow() {
   return (
@@ -580,23 +674,37 @@ function MissionFlow() {
   );
 }
 
-function FlowStep({ icon, label, active }) {
+
+function FlowStep({
+  icon,
+  label,
+  active,
+}) {
   return (
     <div
-      className={`flow-step ${active ? "active" : ""}`}
+      className={`flow-step ${
+        active ? "active" : ""
+      }`}
     >
+
       <div className="flow-icon">
         {icon}
       </div>
 
       <span>{label}</span>
+
     </div>
   );
 }
 
+
 function FlowLine({ active }) {
   return (
-    <div className={`flow-line ${active ? "active" : ""}`} />
+    <div
+      className={`flow-line ${
+        active ? "active" : ""
+      }`}
+    />
   );
 }
 

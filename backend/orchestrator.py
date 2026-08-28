@@ -4,7 +4,7 @@ from backend.models import Task, Subtask
 
 from backend.tasks import create_subtask
 
-from marketplace import (
+from backend.marketplace import (
     generate_bids,
     select_best_agent
 )
