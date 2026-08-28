@@ -1,0 +1,14 @@
+[
+    {
+        "id": "AC001",
+        "name": "Central Park",
+        "city": "New York",
+        "price": 0
+    },
+    {
+        "id": "AC002",
+        "name": "Museum Visit",
+        "city": "New York",
+        "price": 30
+    }
+]
