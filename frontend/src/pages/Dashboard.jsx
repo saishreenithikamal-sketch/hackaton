@@ -105,14 +105,7 @@ function Dashboard({ onNavigate }) {
   onClick={() => onNavigate("status")}
 />
 
-          {/* SYSTEM STATUS */}
 
-          <NavItem
-            icon={<BarChart3 />}
-            label="System Status"
-            onClick={() => onNavigate("status")}
-          />
-          
 
 
           {/* SETTINGS - DECORATIVE */}

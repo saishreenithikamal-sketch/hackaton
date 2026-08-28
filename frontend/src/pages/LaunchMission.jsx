@@ -214,10 +214,6 @@ function LaunchMission({ onBack, onLaunch,onNavigate }) {
             onClick={() => onNavigate?.("analytics")}
           />
 
-          <SidebarItem
-            icon={<History />}
-            label="Mission Logs"
-          />
 
         </SidebarSection>
 
