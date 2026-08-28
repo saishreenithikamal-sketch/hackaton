@@ -25,7 +25,7 @@ import {
   Coins,
 } from "lucide-react";
 
-function LaunchMission({ onBack, onLaunch }) {
+function LaunchMission({ onBack, onLaunch,onNavigate }) {
   const [form, setForm] = useState({
     origin: "",
     destination: "",
@@ -202,26 +202,24 @@ function LaunchMission({ onBack, onLaunch }) {
               active
             />
 
-            <SidebarItem
-              icon={<Bot />}
-              label="Agent Fleet"
-            />
+            
 
           </SidebarSection>
 
           <SidebarSection title="INTELLIGENCE">
 
-            <SidebarItem
-              icon={<BarChart3 />}
-              label="Analytics"
-            />
+          <SidebarItem
+            icon={<BarChart3 />}
+            label="Analytics"
+            onClick={() => onNavigate?.("analytics")}
+          />
 
-            <SidebarItem
-              icon={<History />}
-              label="Mission Logs"
-            />
+          <SidebarItem
+            icon={<History />}
+            label="Mission Logs"
+          />
 
-          </SidebarSection>
+        </SidebarSection>
 
         </aside>
 
