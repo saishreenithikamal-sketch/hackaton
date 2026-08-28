@@ -65,6 +65,40 @@ def explain_risk(agent):
 
 
 # 4. Rank all agents
+def get_agent_stats(agent):
+
+    score = calculate_agent_score(agent)
+
+    if score >= 85:
+        risk_level = "LOW"
+    elif score >= 65:
+        risk_level = "MEDIUM"
+    else:
+        risk_level = "HIGH"
+
+    return {
+        "name": agent["name"],
+        "overall_score": score,
+
+        "stats": {
+            "trust": agent["trust"],
+            "accuracy": agent["accuracy"],
+            "reliability": agent["reliability"],
+            "success_rate": agent["success_rate"],
+            "cost_efficiency": agent["cost_efficiency"]
+        },
+
+        "history": {
+            "tasks_completed": agent["tasks_completed"],
+            "disputes": agent["disputes"],
+            "fraud_flags": agent["fraud_flags"]
+        },
+
+        "risk_level": risk_level,
+
+        "reasons": explain_agent(agent),
+        "warnings": explain_risk(agent)
+    }
 def rank_agents():
     ranked = []
 
@@ -101,3 +135,15 @@ if __name__ == "__main__":
         print(agent)
 
     print("\nSelected Agent:", result[0]["name"])
+    selected_name = result[0]["name"]
+
+    selected_agent = next(
+        agent for agent in agents
+        if agent["name"] == selected_name
+    )
+
+    print("\n===== AGENT TRUST CARD =====")
+
+    stats = get_agent_stats(selected_agent)
+
+    print(stats)
